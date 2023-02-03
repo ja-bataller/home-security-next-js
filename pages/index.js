@@ -36,14 +36,13 @@ export default function Home() {
       confirmPassword,
     });
 
-    cookieCutter.set("jwt", res.data.token);
-
     if (res.data.message === "The Email is already in use.") {
       iziToast.error({
         title: "Error",
         message: res.data.message,
         position: "topCenter",
       });
+      setEmail('')
       setIsPending(false);
       return;
     }
@@ -54,28 +53,16 @@ export default function Home() {
         message: res.data.message,
         position: "topCenter",
       });
+      setPassword('')
+      setConfirmPassword('')
       setIsPending(false);
       return;
     }
 
     console.log(res);
-    Router.push("/dashboard");
-
-    // setFirstName("");
-    // setLastName("");
-    // setEmail("");
-    // setPassword("");
-    // setConfirmPassword("");
-
-    // setIsPending(false);
-
-    // iziToast.success({
-    //   title: "Success",
-    //   message: res.data.message,
-    //   position: "topCenter",
-    // });
-
+    cookieCutter.set("jwt", res.data.token);
     $("#signupModal").modal("hide");
+    Router.push("/dashboard");
     // $("#loginModal").modal("show");
   };
 
@@ -90,41 +77,74 @@ export default function Home() {
       password,
     });
 
-    // if (res.data.message === "The Email is already in use.") {
-    //   iziToast.error({
-    //     title: "Error",
-    //     message: res.data.message,
-    //     position: "topCenter",
-    //   });
-    //   setIsPending(false);
-    //   return;
-    // }
+    if (res.data.message === "The Email is not yet registered.") {
+      iziToast.error({
+        title: "Error",
+        message: res.data.message,
+        position: "topCenter",
+      });
+      setEmail('')
+      setPassword('')
+      setIsPending(false);
+      return;
+    }
 
-    // if (res.data.message === "Password and Confirm Password doesn't match.") {
-    //   iziToast.error({
-    //     title: "Error",
-    //     message: res.data.message,
-    //     position: "topCenter",
-    //   });
-    //   setIsPending(false);
-    //   return;
-    // }
+    if (res.data.message === "Incorrect password.") {
+      iziToast.error({
+        title: "Error",
+        message: res.data.message,
+        position: "topCenter",
+      });
+      setEmail('')
+      setPassword('')
+      setIsPending(false);
+      return;
+    }
+
+    console.log(res);
+    cookieCutter.set("jwt", res.data.token);
+    $("#loginModal").modal("hide");
+    Router.push("/dashboard");
+
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+
+    setIsPending(true);
+
+    // POST method to Node Server
+    const res = await Axios.post("http://192.168.254.115:3001/forgot", {
+      email,
+    });
+
+    if (res.data.message === "The Email is not yet registered.") {
+      iziToast.error({
+        title: "Error",
+        message: res.data.message,
+        position: "topCenter",
+      });
+      setEmail('')
+      setIsPending(false);
+      return;
+    }
 
     console.log(res);
 
-    // setEmail("");
-    // setPassword("");
+    if (res.data.message === "The OTP has been sent to your email.") {
+      iziToast.success({
+        title: "Sent",
+        message: res.data.message,
+        position: "topCenter",
+      });
+      setEmail('')
+      setIsPending(false);
 
-    // setIsPending(false);
+      $("#forgotPasswordModal").modal("hide");
 
-    // iziToast.success({
-    //   title: "Success",
-    //   message: res.data.message,
-    //   position: "topCenter",
-    // });
+      return;
+    }
 
-    // $("#signupModal").modal("hide");
-    // $("#loginModal").modal("show");
   };
 
   return (
@@ -335,9 +355,15 @@ export default function Home() {
                   />
                 </div>
 
-                <button type="submit" className="btn btn-outline-primary w-100 mb-2">
-                  Log In
-                </button>
+                {!isPending && <button className="btn btn-outline-primary w-100 mb-2">Log In</button>}
+
+                {isPending && (
+                  <button className="btn btn-outline-primary w-100 mb-2" disabled>
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </button>
+                )}
               </form>
 
               <div className="text-center mt-2">
@@ -349,7 +375,8 @@ export default function Home() {
           </div>
         </div>
       </div>
-
+      
+      {/* Forgot Password Modal */}
       <div className="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div className="modal-dialog">
           <div className="modal-content">
@@ -360,17 +387,31 @@ export default function Home() {
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div className="modal-body">
-              <form>
+              <form onSubmit={handleForgotPassword}>
                 <div class="mb-3">
                   <label for="recipient-name" class="col-form-label">
                     Email<sup className="text-danger">*</sup>:
                   </label>
-                  <input type="email" class="form-control" id="recipient-name" required />
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="signup_email"
+                    name="signup_email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
 
-                <button type="submit" className="btn btn-outline-danger w-100 mb-2">
-                  Reset Password
-                </button>
+                {!isPending && <button className="btn btn-outline-danger w-100 mb-2">Reset Password</button>}
+
+                {isPending && (
+                  <button className="btn btn-outline-danger w-100 mb-2" disabled>
+                    <div class="spinner-border text-danger" role="status">
+                      <span class="sr-only">Loading...</span>
+                    </div>
+                  </button>
+                )}
               </form>
             </div>
           </div>
